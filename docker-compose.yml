@@ -1,0 +1,249 @@
+# Open-WebUI Stack
+# Environment variables are loaded from .env file by default
+# See README.md for detailed documentation
+#
+# ARM64 COMPATIBILITY NOTES:
+# - All services support ARM64 architecture
+# - Using latest tags for better ARM64 support where applicable
+
+version: "3.8"
+
+services:
+  open-webui:
+    container_name: "${CONTAINER_NAME_PREFIX}_open_webui"
+    image: "ghcr.io/open-webui/open-webui:${OPEN_WEBUI_VERSION:-main}"
+    user: "${PUID}:${PGID}"
+    environment:
+      - TZ=${TZ}
+      - WEBUI_SECRET_KEY=${WEBUI_SECRET_KEY}
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://ollama:11434}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - ENABLE_SIGNUP=${ENABLE_SIGNUP:-true}
+      - DEFAULT_USER_ROLE=${DEFAULT_USER_ROLE:-pending}
+      - WEBUI_AUTH=${WEBUI_AUTH:-true}
+    ports:
+      - "${OPEN_WEBUI_PORT:-3000}:8080"
+    volumes:
+      - "open_webui_data_volume:/app/backend/data"
+      - "/etc/localtime:/etc/localtime:ro"
+    networks:
+      container_internet:
+      open_webui_app:
+      open_webui_db:
+      open_webui_models:
+      home_iot:
+        ipv4_address: ${OPEN_WEBUI_IP}
+    depends_on:
+      - ollama
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: ${OPEN_WEBUI_MEMORY_LIMIT:-2G}
+
+  ollama:
+    container_name: "${CONTAINER_NAME_PREFIX}_ollama"
+    image: "ollama/ollama:${OLLAMA_VERSION:-latest}"
+    environment:
+      - TZ=${TZ}
+      - OLLAMA_ORIGINS=${OLLAMA_ORIGINS:-*}
+      - OLLAMA_HOST=${OLLAMA_HOST:-0.0.0.0}
+    devices:
+      - ${OLLAMA_DEVICE_GPU:-/dev/null:/dev/null}
+    volumes:
+      - "ollama_data_volume:/root/.ollama"
+    networks:
+      container_internet:
+      open_webui_models:
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: ${OLLAMA_GPU_COUNT:-0}
+              capabilities: [gpu]
+      replicas: ${ENABLE_OLLAMA:-1}
+
+  # Alternative: RKLlama for Rockchip NPU acceleration
+  rkllama:
+    container_name: "${CONTAINER_NAME_PREFIX}_rkllama"
+    image: "ghcr.io/notpunchnox/rkllama:main"
+    environment:
+      - TZ=${TZ}
+    security_opt:
+      - systempaths=unconfined
+      - apparmor=unconfined
+    devices:
+      - ${RKLLAMA_DEVICE_DRI:-/dev/dri:/dev/dri}
+    volumes:
+      - "rkllama_data_volume:/app/models"
+    ports:
+      - "${RKLLAMA_PORT:-8080}:8080"
+    networks:
+      container_internet:
+      open_webui_models:
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    deploy:
+      replicas: ${ENABLE_RKLLAMA:-0}
+
+  redis:
+    container_name: "${CONTAINER_NAME_PREFIX}_open_webui_redis"
+    image: "redis:7-alpine"
+    environment:
+      - TZ=${TZ}
+    networks:
+      open_webui_db:
+    volumes:
+      - "redis_data_volume:/data"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    deploy:
+      replicas: ${ENABLE_REDIS:-1}
+
+  postgres:
+    container_name: "${CONTAINER_NAME_PREFIX}_open_webui_postgres"
+    image: "postgres:${POSTGRES_VERSION:-15-alpine}"
+    environment:
+      - TZ=${TZ}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_USER=${POSTGRES_USER:-openwebui}
+      - POSTGRES_DB=${POSTGRES_DB:-openwebui}
+      - POSTGRES_INITDB_ARGS=--data-checksums
+    networks:
+      open_webui_db:
+    volumes:
+      - "postgres_data_volume:/var/lib/postgresql/data"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+    deploy:
+      replicas: ${ENABLE_POSTGRES:-0}
+    logging:
+      driver: json-file
+      options:
+        max-file: '5'
+        max-size: 10m
+
+  cloudflared:
+    container_name: "${CONTAINER_NAME_PREFIX}_open_webui_cloudflared"
+    image: "cloudflare/cloudflared:latest"
+    entrypoint: ["cloudflared", "--no-autoupdate"]
+    command: ["tunnel", "run"]
+    user: "${PUID}:${PGID}"
+    environment:
+      - TUNNEL_TOKEN=${OPEN_WEBUI_CLOUDFLARE_TUNNEL_TOKEN}
+    networks:
+      container_internet:
+      open_webui_app:
+    restart: unless-stopped
+    deploy:
+      replicas: ${ENABLE_OPEN_WEBUI_CLOUDFLARED:-0}
+    healthcheck:
+      test: ["CMD", "cloudflared", "tunnel", "status"]
+      interval: 120s
+      timeout: 30s
+      retries: 5
+      start_period: 60s
+
+networks:
+  # Internal isolated network for app communication
+  open_webui_app:
+    name: "${OPEN_WEBUI_APP_NETWORK}"
+    internal: true
+    driver: bridge
+
+  # Network for model communication
+  open_webui_models:
+    name: "${OPEN_WEBUI_MODELS_NETWORK}"
+    internal: true
+    driver: bridge
+
+  # Database network for database communication
+  open_webui_db:
+    name: "${OPEN_WEBUI_DB_NETWORK}"
+    internal: true
+    driver: bridge
+
+  # External network for internet access
+  container_internet:
+    external: true
+    name: "containers_internet"
+
+  # Home IoT network (optional)
+  home_iot:
+    external: ${ENABLE_HOME_IOT_NETWORK:-false}
+    name: "${HOME_IOT_NETWORK:-home_iot}"
+
+volumes:
+  # Open-WebUI data volume for user data, models, etc.
+  open_webui_data_volume:
+    name: "${CONTAINER_NAME_PREFIX}_open_webui_data"
+    driver: local
+    driver_opts:
+      type: ${OPEN_WEBUI_DATA_VOLUME_TYPE:-}
+      o: ${OPEN_WEBUI_DATA_VOLUME_OPTIONS:-}
+      device: ${OPEN_WEBUI_DATA_BASE:-}
+  
+  # Ollama models volume
+  ollama_data_volume:
+    name: "${CONTAINER_NAME_PREFIX}_ollama_data"
+    driver: local
+    driver_opts:
+      type: ${OLLAMA_DATA_VOLUME_TYPE:-}
+      o: ${OLLAMA_DATA_VOLUME_OPTIONS:-}
+      device: ${OLLAMA_DATA_BASE:-}
+  
+  # Redis data volume
+  redis_data_volume:
+    name: "${CONTAINER_NAME_PREFIX}_redis_data"
+    driver: local
+    driver_opts:
+      type: ${REDIS_DATA_VOLUME_TYPE:-}
+      o: ${REDIS_DATA_VOLUME_OPTIONS:-}
+      device: ${REDIS_DATA_BASE:-}
+  
+  # PostgreSQL data volume
+  postgres_data_volume:
+    name: "${CONTAINER_NAME_PREFIX}_postgres_data"
+    driver: local
+    driver_opts:
+      type: ${POSTGRES_DATA_VOLUME_TYPE:-}
+      o: ${POSTGRES_DATA_VOLUME_OPTIONS:-}
+      device: ${POSTGRES_DATA_BASE:-}
+  
+  # RKLlama models volume (for Rockchip NPU)
+  rkllama_data_volume:
+    name: "${CONTAINER_NAME_PREFIX}_rkllama_data"
+    driver: local
+    driver_opts:
+      type: ${RKLLAMA_DATA_VOLUME_TYPE:-}
+      o: ${RKLLAMA_DATA_VOLUME_OPTIONS:-}
+      device: ${RKLLAMA_DATA_BASE:-} 

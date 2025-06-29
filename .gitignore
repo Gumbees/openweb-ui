@@ -1,0 +1,296 @@
+# =============================================================================
+# ENVIRONMENT AND CONFIGURATION FILES
+# =============================================================================
+
+# Environment files with sensitive data
+.env
+.env.local
+.env.production
+.env.staging
+*.env
+
+# Configuration backups
+*.conf.bak
+*.config.bak
+
+# =============================================================================
+# DOCKER AND CONTAINER FILES
+# =============================================================================
+
+# Docker volumes and data directories
+volumes/
+data/
+logs/
+backups/
+
+# Docker build cache
+.dockerignore
+
+# Docker Compose override files (if containing sensitive data)
+docker-compose.override.yml
+docker-compose.prod.yml
+docker-compose.staging.yml
+
+# =============================================================================
+# DATABASE AND STORAGE
+# =============================================================================
+
+# Database files and dumps
+*.db
+*.sqlite
+*.sqlite3
+*.sql
+*.dump
+
+# PostgreSQL data
+postgres-data/
+pg_data/
+
+# Redis data
+redis-data/
+
+# Open-WebUI data
+openwebui-data/
+
+# =============================================================================
+# LOGS AND TEMPORARY FILES
+# =============================================================================
+
+# Log files
+*.log
+logs/
+log/
+
+# Temporary files
+*.tmp
+*.temp
+.tmp/
+temp/
+
+# Backup files
+*.bak
+*.backup
+*~
+*.swp
+*.swo
+
+# =============================================================================
+# SECURITY AND CERTIFICATES
+# =============================================================================
+
+# SSL/TLS certificates and keys
+*.pem
+*.key
+*.crt
+*.cert
+*.p12
+*.pfx
+certificates/
+certs/
+ssl/
+
+# SSH keys
+id_rsa
+id_rsa.pub
+*.pub
+.ssh/
+
+# GPG keys
+*.gpg
+*.asc
+
+# =============================================================================
+# CLOUDFLARE AND TUNNEL CONFIGURATION
+# =============================================================================
+
+# Cloudflare tunnel credentials
+tunnel-credentials.json
+*.pem
+cloudflared/
+
+# =============================================================================
+# OPERATING SYSTEM FILES
+# =============================================================================
+
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# =============================================================================
+# IDE AND EDITOR FILES
+# =============================================================================
+
+# Visual Studio Code
+.vscode/
+*.code-workspace
+
+# JetBrains IDEs
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+.netrwhist
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# Nano
+*.save
+
+# =============================================================================
+# DEVELOPMENT AND BUILD FILES
+# =============================================================================
+
+# Node.js (if any frontend development)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.yarn/
+.pnp.*
+
+# Python (if any scripts)
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv
+.env
+
+# =============================================================================
+# MONITORING AND ANALYTICS
+# =============================================================================
+
+# Prometheus data
+prometheus-data/
+
+# Grafana data
+grafana-data/
+
+# =============================================================================
+# BACKUP AND ARCHIVE FILES
+# =============================================================================
+
+# Compressed files
+*.zip
+*.tar
+*.tar.gz
+*.tar.bz2
+*.tar.xz
+*.tgz
+*.rar
+*.7z
+
+# Archive directories
+archives/
+compressed/
+
+# =============================================================================
+# LOCAL DEVELOPMENT OVERRIDES
+# =============================================================================
+
+# Local development files
+docker-compose.local.yml
+docker-compose.dev.yml
+.local/
+local/
+
+# Personal notes and documentation
+notes.md
+notes.txt
+TODO.md
+NOTES.md
+
+# =============================================================================
+# RUNTIME AND PROCESS FILES
+# =============================================================================
+
+# Process IDs
+*.pid
+
+# Lock files
+*.lock
+
+# Cache directories
+.cache/
+cache/
+
+# =============================================================================
+# CUSTOM PROJECT SPECIFIC
+# =============================================================================
+
+# Open-WebUI specific
+uploads/
+models/
+cache/
+storage/
+
+# Ollama models (if stored locally)
+ollama-models/
+
+# Custom scripts that might contain sensitive data
+secrets.sh
+deploy.sh
+init-secrets.sh 
