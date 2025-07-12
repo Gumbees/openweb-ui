@@ -32,8 +32,6 @@ services:
       open_webui_app:
       open_webui_db:
       open_webui_models:
-      home_iot:
-        ipv4_address: ${OPEN_WEBUI_IP}
     depends_on:
       - ollama
     restart: unless-stopped
