@@ -47,6 +47,25 @@ services:
       resources:
         limits:
           memory: ${OPEN_WEBUI_MEMORY_LIMIT:-2G}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.openwebui-public-http.rule=Host(`${OPEN_WEBUI_PUBLIC_DOMAIN}`)"
+      - "traefik.http.routers.openwebui-public-http.entrypoints=web"
+      - "traefik.http.routers.openwebui-public-http.service=openwebui"
+      - "traefik.http.routers.openwebui-public-https.rule=Host(`${OPEN_WEBUI_PUBLIC_DOMAIN}`)"
+      - "traefik.http.routers.openwebui-public-https.entrypoints=websecure"
+      - "traefik.http.routers.openwebui-public-https.service=openwebui"
+      - "traefik.http.routers.openwebui-public-https.tls=true"
+      - "traefik.http.routers.openwebui-public-https.tls.certresolver=${OPEN_WEBUI_CERT_RESOLVER:-letsencrypt}"
+      - "traefik.http.routers.openwebui-private-http.rule=Host(`${OPEN_WEBUI_PRIVATE_DOMAIN}`)"
+      - "traefik.http.routers.openwebui-private-http.entrypoints=web"
+      - "traefik.http.routers.openwebui-private-http.service=openwebui"
+      - "traefik.http.routers.openwebui-private-https.rule=Host(`${OPEN_WEBUI_PRIVATE_DOMAIN}`)"
+      - "traefik.http.routers.openwebui-private-https.entrypoints=websecure"
+      - "traefik.http.routers.openwebui-private-https.service=openwebui"
+      - "traefik.http.routers.openwebui-private-https.tls=true"
+      - "traefik.http.routers.openwebui-private-https.tls.certresolver=${OPEN_WEBUI_CERT_RESOLVER:-letsencrypt}"
+      - "traefik.http.services.openwebui.loadbalancer.server.port=8080"
 
   ollama:
     container_name: "${CONTAINER_NAME_PREFIX}_ollama"
@@ -196,11 +215,6 @@ networks:
   container_internet:
     external: true
     name: "containers_internet"
-
-  # Home IoT network (optional)
-  home_iot:
-    external: ${ENABLE_HOME_IOT_NETWORK:-false}
-    name: "${HOME_IOT_NETWORK:-home_iot}"
 
 volumes:
   # Open-WebUI data volume for user data, models, etc.
