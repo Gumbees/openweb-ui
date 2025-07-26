@@ -46,6 +46,36 @@ The minimal configuration requires:
 - `CONTAINER_NAME_PREFIX`: Unique prefix for your containers
 - `TZ`: Your timezone
 
+### Authentication Options
+
+#### Local Authentication (Default)
+Standard username/password authentication with local user accounts.
+
+#### Entra ID SSO (Azure AD)
+Configure OAuth/OpenID Connect for single sign-on:
+
+1. **Register an App in Entra ID:**
+   - Go to Azure Portal → Entra ID → App registrations
+   - Create a new registration
+   - Set redirect URI to: `https://your-domain.com/oauth/callback`
+   - Note the Application (client) ID and create a client secret
+
+2. **Configure OAuth settings in `.env`:**
+   ```bash
+   OAUTH_CLIENT_ID=your-application-client-id
+   OAUTH_CLIENT_SECRET=your-client-secret
+   OPENID_PROVIDER_URL=https://login.microsoftonline.com/your-tenant-id/v2.0
+   OAUTH_SCOPES=openid email profile
+   OAUTH_PROVIDER_NAME=Entra ID
+   ```
+
+3. **Optional settings:**
+   ```bash
+   OAUTH_USERNAME_CLAIM=preferred_username  # or 'email'
+   OAUTH_EMAIL_CLAIM=email
+   OAUTH_MERGE_ACCOUNTS_BY_EMAIL=false
+   ```
+
 ### AI Model Providers
 
 You can configure multiple AI providers:
@@ -146,18 +176,29 @@ docker compose exec ollama ollama rm model_name
 
 1. **Change default passwords** in the `.env` file
 2. **Generate a strong secret key** for `WEBUI_SECRET_KEY`
-3. **Disable signup** (`ENABLE_SIGNUP=false`) after creating admin accounts
+3. **Disable signup** (`ENABLE_SIGNUP=false`) after creating admin accounts or when using SSO
 4. **Use Cloudflare Tunnel** for secure remote access instead of port forwarding
 5. **Enable authentication** (`WEBUI_AUTH=true`)
+6. **SSO Security**:
+   - Keep OAuth client secrets secure and rotate them regularly
+   - Use HTTPS for all OAuth redirect URIs
+   - Configure appropriate scopes in Entra ID (minimum required permissions)
+   - Consider setting `OAUTH_MERGE_ACCOUNTS_BY_EMAIL=true` if users might have both local and SSO accounts
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. **Permission errors**: Check `PUID` and `PGID` values
+1. **Permission errors**: Check volume permissions and ensure container can write to data directories
 2. **Port conflicts**: Change `OPEN_WEBUI_PORT` in `.env`
 3. **GPU not detected**: Ensure NVIDIA Container Toolkit is installed
 4. **Network issues**: Check Docker network connectivity
+5. **OAuth/SSO Issues**:
+   - Verify redirect URI matches exactly (including protocol and path)
+   - Check that client secret hasn't expired
+   - Ensure `OPENID_PROVIDER_URL` includes correct tenant ID
+   - Verify required API permissions are granted in Entra ID
+   - Check logs for specific OAuth error messages
 
 ### Health Checks
 

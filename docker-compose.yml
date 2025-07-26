@@ -22,6 +22,17 @@ services:
       - DEFAULT_USER_ROLE=${DEFAULT_USER_ROLE:-pending}
       - WEBUI_AUTH=${WEBUI_AUTH:-true}
       
+      # OAuth/OpenID Connect configuration for Entra ID
+      - OAUTH_CLIENT_ID=${OAUTH_CLIENT_ID:-}
+      - OAUTH_CLIENT_SECRET=${OAUTH_CLIENT_SECRET:-}
+      - OPENID_PROVIDER_URL=${OPENID_PROVIDER_URL:-}
+      - OAUTH_SCOPES=${OAUTH_SCOPES:-openid email profile}
+      - OAUTH_PROVIDER_NAME=${OAUTH_PROVIDER_NAME:-Entra ID}
+      - OAUTH_USERNAME_CLAIM=${OAUTH_USERNAME_CLAIM:-preferred_username}
+      - OAUTH_EMAIL_CLAIM=${OAUTH_EMAIL_CLAIM:-email}
+      - OAUTH_PICTURE_CLAIM=${OAUTH_PICTURE_CLAIM:-picture}
+      - OAUTH_MERGE_ACCOUNTS_BY_EMAIL=${OAUTH_MERGE_ACCOUNTS_BY_EMAIL:-false}
+      
       # Database configuration
       - DATABASE_URL=postgresql://${POSTGRES_USER:-openwebui}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-openwebui}
     #ports:
