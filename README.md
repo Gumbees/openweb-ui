@@ -28,12 +28,7 @@ This Docker Compose configuration provides a complete Open-WebUI stack with Olla
    # Add this to WEBUI_SECRET_KEY in your .env file
    ```
 
-3. **Create the external network:**
-   ```bash
-   docker network create containers_internet
-   ```
-
-4. **Start the services:**
+3. **Start the services:**
    ```bash
    docker compose up -d
    ```
@@ -88,25 +83,20 @@ POSTGRES_PASSWORD=your_secure_password
 ### Networks
 
 The setup uses multiple isolated networks for security:
-- `container_internet`: External internet access (cloudflared, open-webui for external APIs)
-- `open_webui_app`: Internal app communication with no internet (cloudflared, open-webui)
+- `open_webui_app`: App network with internet access (open-webui, ollama, cloudflared)
 - `open_webui_db`: Database network with no internet (open-webui, postgresql, redis)
 - `open_webui_models`: Model communication with no internet (open-webui, ollama)
-- `home_iot`: Optional home network integration
 
 **Network Architecture:**
 ```
-Internet ←→ container_internet ←→ cloudflared
-                                     ↓
-                              open_webui_app ←→ open-webui ←→ open_webui_db ←→ postgresql
-                                                      ↓                    ↓
-                                              open_webui_models ←→ ollama   redis
+Internet ←→ open_webui_app ←→ open-webui ←→ open_webui_db ←→ postgresql
+                ↓                   ↓                    ↓
+           cloudflared       open_webui_models ←→ ollama   redis
 ```
 
 This architecture ensures:
 - Databases are completely isolated from the internet
-- Only necessary services have internet access
-- Cloudflared can only access the app layer, not databases
+- App layer has internet access for external APIs and tunneling
 - Models can be accessed by the app but are isolated from databases
 
 ## Service Management
@@ -167,7 +157,7 @@ docker compose exec ollama ollama rm model_name
 1. **Permission errors**: Check `PUID` and `PGID` values
 2. **Port conflicts**: Change `OPEN_WEBUI_PORT` in `.env`
 3. **GPU not detected**: Ensure NVIDIA Container Toolkit is installed
-4. **Network issues**: Verify external network exists: `docker network ls`
+4. **Network issues**: Check Docker network connectivity
 
 ### Health Checks
 
@@ -210,14 +200,7 @@ Adjust memory limits:
 OPEN_WEBUI_MEMORY_LIMIT=4G
 ```
 
-### Network Configuration
 
-For home network integration:
-```bash
-ENABLE_HOME_IOT_NETWORK=true
-HOME_IOT_NETWORK=your_network_name
-OPEN_WEBUI_IP=192.168.1.100
-```
 
 ## Support
 

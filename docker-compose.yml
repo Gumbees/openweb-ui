@@ -28,7 +28,6 @@ services:
       - "open_webui_data_volume:/app/backend/data"
       - "/etc/localtime:/etc/localtime:ro"
     networks:
-      container_internet:
       open_webui_app:
       open_webui_db:
       open_webui_models:
@@ -79,7 +78,7 @@ services:
     ports:
       - "${OLLAMA_PORT:-11434}:11434"
     networks:
-      container_internet:
+      open_webui_app:
       open_webui_models:
     restart: unless-stopped
     healthcheck:
@@ -152,7 +151,6 @@ services:
     environment:
       - TUNNEL_TOKEN=${OPEN_WEBUI_CLOUDFLARE_TUNNEL_TOKEN}
     networks:
-      container_internet:
       open_webui_app:
     restart: unless-stopped
     deploy:
@@ -165,10 +163,9 @@ services:
       start_period: 60s
 
 networks:
-  # Internal isolated network for app communication
+  # App network with internet access
   open_webui_app:
     name: "${OPEN_WEBUI_APP_NETWORK}"
-    internal: true
     driver: bridge
 
   # Network for model communication
@@ -182,11 +179,6 @@ networks:
     name: "${OPEN_WEBUI_DB_NETWORK}"
     internal: true
     driver: bridge
-
-  # External network for internet access
-  container_internet:
-    external: true
-    name: "containers_internet"
 
 volumes:
   # Open-WebUI data volume for user data, models, etc.
