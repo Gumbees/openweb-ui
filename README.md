@@ -68,32 +68,11 @@ You can configure multiple AI providers:
 
 For NVIDIA GPU support with Ollama:
 1. Install NVIDIA Container Toolkit
-2. Set `OLLAMA_GPU_COUNT=1` (or number of GPUs)
-3. Update `OLLAMA_DEVICE_GPU=/dev/nvidia0:/dev/nvidia0`
+2. Set `ENABLE_OLLAMA=1` 
+3. Set `OLLAMA_GPU_COUNT=1` (or number of GPUs)
+4. Update `OLLAMA_DEVICE_GPU=/dev/nvidia0:/dev/nvidia0` if needed
 
-### NPU Support (Rockchip RK3588/RK3576)
 
-For **Rockchip RK3588/RK3576** boards (Orange Pi 5, etc.), you can use **RKLlama** instead of Ollama for NPU acceleration:
-
-1. **Enable RKLlama** and disable Ollama:
-   ```bash
-   ENABLE_RKLLAMA=1
-   ENABLE_OLLAMA=0
-   ```
-
-2. **Configure NPU device access** (uses DRI devices):
-   ```bash
-   RKLLAMA_DEVICE_DRI=/dev/dri:/dev/dri
-   ```
-
-3. **Verify NPU devices exist**:
-   ```bash
-   ls -la /dev/dri/
-   # Should show: card0, card1, render128, render129
-   ```
-
-4. **Compatible with Armbian** on Orange Pi 5 Plus and other RK3588 boards
-5. **Models**: Use `.rkllm` format models instead of standard Ollama models
 
 ### Database Options
 

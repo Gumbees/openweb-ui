@@ -64,33 +64,38 @@ services:
       - "traefik.http.routers.openwebui-private-https.tls.certresolver=${OPEN_WEBUI_CERT_RESOLVER:-letsencrypt}"
       - "traefik.http.services.openwebui.loadbalancer.server.port=8080"
 
-  # Alternative: RKLlama for Rockchip NPU acceleration
-  rkllama:
-    container_name: "${CONTAINER_NAME_PREFIX}_rkllama"
-    image: "ghcr.io/notpunchnox/rkllama:main"
+  # Ollama for local AI model hosting
+  ollama:
+    container_name: "${CONTAINER_NAME_PREFIX}_ollama"
+    image: "ollama/ollama:${OLLAMA_VERSION:-latest}"
     environment:
       - TZ=${TZ}
-    security_opt:
-      - systempaths=unconfined
-      - apparmor=unconfined
+      - OLLAMA_KEEP_ALIVE=${OLLAMA_KEEP_ALIVE:-5m}
+      - OLLAMA_HOST=0.0.0.0
     devices:
-      - ${RKLLAMA_DEVICE_DRI:-/dev/dri:/dev/dri}
+      - ${OLLAMA_DEVICE_GPU:-/dev/nvidia0:/dev/nvidia0}
     volumes:
-      - "rkllama_data_volume:/app/models"
+      - "ollama_data_volume:/root/.ollama"
     ports:
-      - "${RKLLAMA_PORT:-8080}:8080"
+      - "${OLLAMA_PORT:-11434}:11434"
     networks:
       container_internet:
       open_webui_models:
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      test: ["CMD", "ollama", "list"]
       interval: 60s
       timeout: 10s
       retries: 3
       start_period: 60s
     deploy:
-      replicas: ${ENABLE_RKLLAMA:-0}
+      replicas: ${ENABLE_OLLAMA:-1}
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: ${OLLAMA_GPU_COUNT:-0}
+              capabilities: [gpu]
 
   redis:
     container_name: "${CONTAINER_NAME_PREFIX}_open_webui_redis"
@@ -199,7 +204,7 @@ volumes:
     name: "${CONTAINER_NAME_PREFIX}_postgres_data"
     driver: local
   
-  # RKLlama models volume (for Rockchip NPU)
-  rkllama_data_volume:
-    name: "${CONTAINER_NAME_PREFIX}_rkllama_data"
+  # Ollama models volume
+  ollama_data_volume:
+    name: "${CONTAINER_NAME_PREFIX}_ollama_data"
     driver: local 
