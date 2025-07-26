@@ -12,7 +12,6 @@ services:
   open-webui:
     container_name: "${CONTAINER_NAME_PREFIX}_open_webui"
     image: "ghcr.io/open-webui/open-webui:${OPEN_WEBUI_VERSION:-main}"
-    user: "${PUID}:${PGID}"
     environment:
       - TZ=${TZ}
       - WEBUI_SECRET_KEY=${WEBUI_SECRET_KEY}
