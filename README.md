@@ -10,7 +10,7 @@ This Docker Compose configuration provides a complete Open-WebUI stack with Olla
 - **Redis**: Caching layer (optional but recommended)
 - **Cloudflare Tunnel**: Secure remote access (optional)
 - **Network Isolation**: Secure internal networks
-- **GPU Support**: NVIDIA GPU support for Ollama
+- **CPU Inference**: Ollama runs on CPU (no GPU required)
 - **ARM64 Compatible**: Works on Apple Silicon and ARM64 systems
 
 ## Quick Start
@@ -80,22 +80,22 @@ Configure OAuth/OpenID Connect for single sign-on:
 
 You can configure multiple AI providers:
 
-#### Local Models (Ollama)
+#### Local Models (Ollama CPU)
 - Set `ENABLE_OLLAMA=1`
 - Ollama will be available at `http://ollama:11434` internally
 - Pull models: `docker compose exec ollama ollama pull llama2`
+- **Note**: CPU version - models will run on CPU (slower but no GPU required)
 
 #### External APIs
 - **OpenAI**: Set `OPENAI_API_KEY`
 - **Anthropic**: Set `ANTHROPIC_API_KEY`
 
-### GPU Support
+### Resource Configuration
 
-For NVIDIA GPU support with Ollama:
-1. Install NVIDIA Container Toolkit
-2. Set `ENABLE_OLLAMA=1` 
-3. Set `OLLAMA_GPU_COUNT=1` (or number of GPUs)
-4. Update `OLLAMA_DEVICE_GPU=/dev/nvidia0:/dev/nvidia0` if needed
+For CPU-only Ollama deployment:
+1. Set `ENABLE_OLLAMA=1`
+2. Adjust `OLLAMA_MEMORY_LIMIT=4G` (or higher for larger models)
+3. **Note**: CPU inference is slower but requires no special hardware
 
 
 
@@ -191,7 +191,7 @@ docker compose exec ollama ollama rm model_name
 
 1. **Permission errors**: Check volume permissions and ensure container can write to data directories
 2. **Port conflicts**: Change `OPEN_WEBUI_PORT` in `.env`
-3. **GPU not detected**: Ensure NVIDIA Container Toolkit is installed
+3. **Memory issues**: Increase `OLLAMA_MEMORY_LIMIT` for larger models
 4. **Network issues**: Check Docker network connectivity
 5. **OAuth/SSO Issues**:
    - Verify redirect URI matches exactly (including protocol and path)

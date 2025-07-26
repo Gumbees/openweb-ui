@@ -77,7 +77,7 @@ services:
       - "traefik.http.routers.openwebui-private-https.tls.certresolver=${OPEN_WEBUI_CERT_RESOLVER:-letsencrypt}"
       - "traefik.http.services.openwebui.loadbalancer.server.port=8080"
 
-  # Ollama for local AI model hosting
+  # Ollama for local AI model hosting (CPU version)
   ollama:
     container_name: "${CONTAINER_NAME_PREFIX}_ollama"
     image: "ollama/ollama:${OLLAMA_VERSION:-latest}"
@@ -85,12 +85,10 @@ services:
       - TZ=${TZ}
       - OLLAMA_KEEP_ALIVE=${OLLAMA_KEEP_ALIVE:-5m}
       - OLLAMA_HOST=0.0.0.0
-    #devices:
-      #- ${OLLAMA_DEVICE_GPU:-/dev/nvidia0:/dev/nvidia0}
     volumes:
       - "ollama_data_volume:/root/.ollama"
     #ports:
-     # - "${OLLAMA_PORT:-11434}:11434"
+      #- "${OLLAMA_PORT:-11434}:11434"
     networks:
       open_webui_app:
       open_webui_models:
@@ -102,13 +100,10 @@ services:
       retries: 3
       start_period: 60s
     deploy:
-      replicas: ${ENABLE_OLLAMA:-0}
-      #resources:
-        #reservations:
-          #devices:
-            #- driver: nvidia
-              #count: ${OLLAMA_GPU_COUNT:-0}
-              #capabilities: [gpu]
+      replicas: ${ENABLE_OLLAMA:-1}
+      resources:
+        limits:
+          memory: ${OLLAMA_MEMORY_LIMIT:-4G}
 
   redis:
     container_name: "${CONTAINER_NAME_PREFIX}_open_webui_redis"
