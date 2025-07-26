@@ -71,12 +71,12 @@ services:
       - TZ=${TZ}
       - OLLAMA_KEEP_ALIVE=${OLLAMA_KEEP_ALIVE:-5m}
       - OLLAMA_HOST=0.0.0.0
-    devices:
-      - ${OLLAMA_DEVICE_GPU:-/dev/nvidia0:/dev/nvidia0}
+    #devices:
+      #- ${OLLAMA_DEVICE_GPU:-/dev/nvidia0:/dev/nvidia0}
     volumes:
       - "ollama_data_volume:/root/.ollama"
-    ports:
-      - "${OLLAMA_PORT:-11434}:11434"
+    #ports:
+     # - "${OLLAMA_PORT:-11434}:11434"
     networks:
       open_webui_app:
       open_webui_models:
@@ -88,13 +88,13 @@ services:
       retries: 3
       start_period: 60s
     deploy:
-      replicas: ${ENABLE_OLLAMA:-1}
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: ${OLLAMA_GPU_COUNT:-0}
-              capabilities: [gpu]
+      replicas: ${ENABLE_OLLAMA:-0}
+      #resources:
+        #reservations:
+          #devices:
+            #- driver: nvidia
+              #count: ${OLLAMA_GPU_COUNT:-0}
+              #capabilities: [gpu]
 
   redis:
     container_name: "${CONTAINER_NAME_PREFIX}_open_webui_redis"
