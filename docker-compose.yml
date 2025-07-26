@@ -22,6 +22,9 @@ services:
       - ENABLE_SIGNUP=${ENABLE_SIGNUP:-true}
       - DEFAULT_USER_ROLE=${DEFAULT_USER_ROLE:-pending}
       - WEBUI_AUTH=${WEBUI_AUTH:-true}
+      
+      # Database configuration
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-openwebui}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-openwebui}
     #ports:
       #- "${OPEN_WEBUI_PORT:-3000}:8080"
     volumes:
@@ -135,7 +138,7 @@ services:
       start_period: 30s
     restart: unless-stopped
     deploy:
-      replicas: ${ENABLE_POSTGRES:-0}
+      replicas: ${ENABLE_POSTGRES:-1}
     logging:
       driver: json-file
       options:
