@@ -32,6 +32,7 @@ services:
       - OAUTH_EMAIL_CLAIM=${OAUTH_EMAIL_CLAIM:-email}
       - OAUTH_PICTURE_CLAIM=${OAUTH_PICTURE_CLAIM:-picture}
       - OAUTH_MERGE_ACCOUNTS_BY_EMAIL=${OAUTH_MERGE_ACCOUNTS_BY_EMAIL:-false}
+      - ENABLE_OAUTH_SIGNUP=${ENABLE_OAUTH_SIGNUP:-true}
       
       # Database configuration
       - DATABASE_URL=postgresql://${POSTGRES_USER:-openwebui}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-openwebui}
