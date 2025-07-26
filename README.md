@@ -222,11 +222,7 @@ docker run --rm -v openwebui_open_webui_data:/data -v $(pwd):/backup alpine tar 
 
 ### Custom Volume Mounts
 
-Edit volume configuration in `.env`:
-```bash
-OPEN_WEBUI_DATA_BASE=/path/to/your/data
-OPEN_WEBUI_DATA_VOLUME_TYPE=bind
-```
+All volumes now use Docker's default local storage. Data is stored in Docker-managed volumes under `/var/lib/docker/volumes/` (on most systems). If you need custom mount points, you can modify the volume definitions directly in the `docker-compose.yml` file.
 
 ### Resource Limits
 
