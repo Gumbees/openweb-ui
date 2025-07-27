@@ -22,12 +22,11 @@ services:
       - ENABLE_SIGNUP=${ENABLE_SIGNUP:-true}
       - DEFAULT_USER_ROLE=${DEFAULT_USER_ROLE:-pending}
       - WEBUI_AUTH=${WEBUI_AUTH:-true}
-    ports:
-      - "${OPEN_WEBUI_PORT:-3000}:8080"
     volumes:
       - "open_webui_data_volume:/app/backend/data"
       - "/etc/localtime:/etc/localtime:ro"
     networks:
+      proxy:
       container_internet:
       open_webui_app:
       open_webui_db:
@@ -43,7 +42,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: ${OPEN_WEBUI_MEMORY_LIMIT:-2G}
+          memory: ${OPEN_WEBUI_MEMORY_LIMIT:-4G}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.openwebui-public-http.rule=Host(`${OPEN_WEBUI_PUBLIC_DOMAIN}`)"
@@ -182,6 +181,10 @@ networks:
   container_internet:
     external: true
     name: "containers_internet"
+
+  # External proxy network
+  proxy:
+    external: true
 
 volumes:
   # Open-WebUI data volume for user data, models, etc.
