@@ -79,7 +79,6 @@ services:
     networks:
       - stack
       - traefik_public
-    depends_on: []
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 30s
@@ -122,15 +121,8 @@ services:
     image: "ghcr.io/notpunchnox/rkllama:main"
     environment:
       - TZ=${TZ}
-    security_opt:
-      - systempaths=unconfined
-      - apparmor=unconfined
-    devices:
-      - ${RKLLAMA_DEVICE_DRI:-/dev/dri:/dev/dri}
     volumes:
       - "rkllama_data_volume:/app/models"
-    ports:
-      - "${RKLLAMA_PORT:-8080}:8080"
     networks:
       - stack
     healthcheck:
