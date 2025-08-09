@@ -28,14 +28,19 @@ This Docker Compose configuration provides a complete Open-WebUI stack with Olla
    # Add this to WEBUI_SECRET_KEY in your .env file
    ```
 
-3. **Create the external network:**
+3. **Initialize Docker Swarm (required for this stack):**
    ```bash
-   docker network create containers_internet
+   docker swarm init
    ```
 
-4. **Start the services:**
+4. **Create the external Traefik network (overlay):**
    ```bash
-   docker compose up -d
+   docker network create --driver=overlay --attachable traefik_public
+   ```
+
+5. **Deploy the stack to Swarm:**
+   ```bash
+   docker stack deploy -c docker-compose.yml openwebui
    ```
 
 5. **Access Open-WebUI:**
@@ -108,50 +113,34 @@ POSTGRES_PASSWORD=your_secure_password
 
 ### Networks
 
-The setup uses multiple isolated networks for security:
-- `container_internet`: External internet access (cloudflared, open-webui for external APIs)
-- `open_webui_app`: Internal app communication with no internet (cloudflared, open-webui)
-- `open_webui_db`: Database network with no internet (open-webui, postgresql, redis)
-- `open_webui_models`: Model communication with no internet (open-webui, ollama)
-- `home_iot`: Optional home network integration
+This stack is Swarm-ready and uses overlay networks:
+- `stack` (overlay, attachable): Internal stack network for all services
+- `traefik_public` (external overlay): For Traefik to route public/private domains
 
-**Network Architecture:**
-```
-Internet ←→ container_internet ←→ cloudflared
-                                     ↓
-                              open_webui_app ←→ open-webui ←→ open_webui_db ←→ postgresql
-                                                      ↓                    ↓
-                                              open_webui_models ←→ ollama   redis
-```
-
-This architecture ensures:
-- Databases are completely isolated from the internet
-- Only necessary services have internet access
-- Cloudflared can only access the app layer, not databases
-- Models can be accessed by the app but are isolated from databases
+Notes:
+- Services expecting proxy traffic (e.g., `open-webui`) are attached to both `stack` and `traefik_public`.
+- All other services are attached only to `stack`.
 
 ## Service Management
 
-### Start services:
+### Deploy/Update the stack:
 ```bash
-docker compose up -d
+docker stack deploy -c docker-compose.yml openwebui
 ```
 
 ### Stop services:
 ```bash
-docker compose down
+docker stack rm openwebui
 ```
 
 ### View logs:
 ```bash
-docker compose logs -f open-webui
-docker compose logs -f ollama
+docker service logs -f openwebui_open-webui | cat
 ```
 
 ### Update services:
 ```bash
-docker compose pull
-docker compose up -d
+docker stack deploy -c docker-compose.yml openwebui
 ```
 
 ## Ollama Management
@@ -194,7 +183,7 @@ docker compose exec ollama ollama rm model_name
 
 Check service health:
 ```bash
-docker compose ps
+docker stack ps openwebui
 ```
 
 All services include health checks for monitoring.

@@ -10,7 +10,6 @@ version: "3.8"
 
 services:
   open-webui:
-    container_name: "${CONTAINER_NAME_PREFIX}_open_webui"
     image: "ghcr.io/open-webui/open-webui:${OPEN_WEBUI_VERSION:-main}"
     user: "${PUID}:${PGID}"
     environment:
@@ -78,13 +77,9 @@ services:
       - "open_webui_data_volume:/app/backend/data"
       - "/etc/localtime:/etc/localtime:ro"
     networks:
-      proxy:
-      container_internet:
-      open_webui_app:
-      open_webui_db:
-      open_webui_models:
+      - stack
+      - traefik_public
     depends_on: []
-    restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 30s
@@ -92,32 +87,38 @@ services:
       retries: 3
       start_period: 30s
     deploy:
+      replicas: ${OPEN_WEBUI_REPLICAS:-1}
       resources:
         limits:
           memory: ${OPEN_WEBUI_MEMORY_LIMIT:-4G}
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.openwebui-public-http.rule=Host(`${OPEN_WEBUI_PUBLIC_DOMAIN}`)"
-      - "traefik.http.routers.openwebui-public-http.entrypoints=web"
-      - "traefik.http.routers.openwebui-public-http.service=openwebui"
-      - "traefik.http.routers.openwebui-public-https.rule=Host(`${OPEN_WEBUI_PUBLIC_DOMAIN}`)"
-      - "traefik.http.routers.openwebui-public-https.entrypoints=websecure"
-      - "traefik.http.routers.openwebui-public-https.service=openwebui"
-      - "traefik.http.routers.openwebui-public-https.tls=true"
-      - "traefik.http.routers.openwebui-public-https.tls.certresolver=${OPEN_WEBUI_CERT_RESOLVER:-letsencrypt}"
-      - "traefik.http.routers.openwebui-private-http.rule=Host(`${OPEN_WEBUI_PRIVATE_DOMAIN}`)"
-      - "traefik.http.routers.openwebui-private-http.entrypoints=web"
-      - "traefik.http.routers.openwebui-private-http.service=openwebui"
-      - "traefik.http.routers.openwebui-private-https.rule=Host(`${OPEN_WEBUI_PRIVATE_DOMAIN}`)"
-      - "traefik.http.routers.openwebui-private-https.entrypoints=websecure"
-      - "traefik.http.routers.openwebui-private-https.service=openwebui"
-      - "traefik.http.routers.openwebui-private-https.tls=true"
-      - "traefik.http.routers.openwebui-private-https.tls.certresolver=${OPEN_WEBUI_CERT_RESOLVER:-letsencrypt}"
-      - "traefik.http.services.openwebui.loadbalancer.server.port=8080"
+      restart_policy:
+        condition: any
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+      labels:
+        - "traefik.enable=true"
+        - "traefik.docker.network=${TRAEFIK_PUBLIC_NETWORK:-traefik_public}"
+        - "traefik.http.routers.openwebui-public-http.rule=Host(`${OPEN_WEBUI_PUBLIC_DOMAIN}`)"
+        - "traefik.http.routers.openwebui-public-http.entrypoints=web"
+        - "traefik.http.routers.openwebui-public-http.service=openwebui"
+        - "traefik.http.routers.openwebui-public-https.rule=Host(`${OPEN_WEBUI_PUBLIC_DOMAIN}`)"
+        - "traefik.http.routers.openwebui-public-https.entrypoints=websecure"
+        - "traefik.http.routers.openwebui-public-https.service=openwebui"
+        - "traefik.http.routers.openwebui-public-https.tls=true"
+        - "traefik.http.routers.openwebui-public-https.tls.certresolver=${OPEN_WEBUI_CERT_RESOLVER:-letsencrypt}"
+        - "traefik.http.routers.openwebui-private-http.rule=Host(`${OPEN_WEBUI_PRIVATE_DOMAIN}`)"
+        - "traefik.http.routers.openwebui-private-http.entrypoints=web"
+        - "traefik.http.routers.openwebui-private-http.service=openwebui"
+        - "traefik.http.routers.openwebui-private-https.rule=Host(`${OPEN_WEBUI_PRIVATE_DOMAIN}`)"
+        - "traefik.http.routers.openwebui-private-https.entrypoints=websecure"
+        - "traefik.http.routers.openwebui-private-https.service=openwebui"
+        - "traefik.http.routers.openwebui-private-https.tls=true"
+        - "traefik.http.routers.openwebui-private-https.tls.certresolver=${OPEN_WEBUI_CERT_RESOLVER:-letsencrypt}"
+        - "traefik.http.services.openwebui.loadbalancer.server.port=8080"
 
   # Alternative: RKLlama for Rockchip NPU acceleration
   rkllama:
-    container_name: "${CONTAINER_NAME_PREFIX}_rkllama"
     image: "ghcr.io/notpunchnox/rkllama:main"
     environment:
       - TZ=${TZ}
@@ -131,9 +132,7 @@ services:
     ports:
       - "${RKLLAMA_PORT:-8080}:8080"
     networks:
-      container_internet:
-      open_webui_models:
-    restart: unless-stopped
+      - stack
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 60s
@@ -142,14 +141,18 @@ services:
       start_period: 60s
     deploy:
       replicas: ${ENABLE_RKLLAMA:-0}
+      restart_policy:
+        condition: any
+        delay: 5s
+        max_attempts: 3
+        window: 120s
 
   redis:
-    container_name: "${CONTAINER_NAME_PREFIX}_open_webui_redis"
     image: "redis:7-alpine"
     environment:
       - TZ=${TZ}
     networks:
-      open_webui_db:
+      - stack
     volumes:
       - "redis_data_volume:/data"
     healthcheck:
@@ -157,12 +160,15 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-    restart: unless-stopped
     deploy:
       replicas: ${ENABLE_REDIS:-1}
+      restart_policy:
+        condition: any
+        delay: 5s
+        max_attempts: 3
+        window: 120s
 
   postgres:
-    container_name: "${CONTAINER_NAME_PREFIX}_open_webui_postgres"
     image: "postgres:${POSTGRES_VERSION:-15-alpine}"
     environment:
       - TZ=${TZ}
@@ -171,7 +177,7 @@ services:
       - POSTGRES_DB=${POSTGRES_DB:-openwebui}
       - POSTGRES_INITDB_ARGS=--data-checksums
     networks:
-      open_webui_db:
+      - stack
     volumes:
       - "postgres_data_volume:/var/lib/postgresql/data"
     healthcheck:
@@ -180,9 +186,13 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
-    restart: unless-stopped
     deploy:
       replicas: ${ENABLE_POSTGRES:-0}
+      restart_policy:
+        condition: any
+        delay: 5s
+        max_attempts: 3
+        window: 120s
     logging:
       driver: json-file
       options:
@@ -190,7 +200,6 @@ services:
         max-size: 10m
 
   cloudflared:
-    container_name: "${CONTAINER_NAME_PREFIX}_open_webui_cloudflared"
     image: "cloudflare/cloudflared:latest"
     entrypoint: ["cloudflared", "--no-autoupdate"]
     command: ["tunnel", "run"]
@@ -198,11 +207,14 @@ services:
     environment:
       - TUNNEL_TOKEN=${OPEN_WEBUI_CLOUDFLARE_TUNNEL_TOKEN}
     networks:
-      container_internet:
-      open_webui_app:
-    restart: unless-stopped
+      - stack
     deploy:
       replicas: ${ENABLE_OPEN_WEBUI_CLOUDFLARED:-0}
+      restart_policy:
+        condition: any
+        delay: 5s
+        max_attempts: 3
+        window: 120s
     healthcheck:
       test: ["CMD", "cloudflared", "tunnel", "status"]
       interval: 120s
@@ -211,32 +223,16 @@ services:
       start_period: 60s
 
 networks:
-  # Internal isolated network for app communication
-  open_webui_app:
-    name: "${OPEN_WEBUI_APP_NETWORK}"
-    internal: true
-    driver: bridge
+  # Single overlay network for this stack
+  stack:
+    name: "${STACK_NETWORK_NAME:-openwebui_stack}"
+    driver: overlay
+    attachable: true
 
-  # Network for model communication
-  open_webui_models:
-    name: "${OPEN_WEBUI_MODELS_NETWORK}"
-    internal: true
-    driver: bridge
-
-  # Database network for database communication
-  open_webui_db:
-    name: "${OPEN_WEBUI_DB_NETWORK}"
-    internal: true
-    driver: bridge
-
-  # External network for internet access
-  container_internet:
+  # External proxy network used by Traefik
+  traefik_public:
     external: true
-    name: "containers_internet"
-
-  # External proxy network
-  proxy:
-    external: true
+    name: "${TRAEFIK_PUBLIC_NETWORK:-traefik_public}"
 
 volumes:
   # Open-WebUI data volume for user data, models, etc.
