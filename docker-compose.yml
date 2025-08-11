@@ -130,6 +130,9 @@ services:
       - "/dev/kfd:/dev/kfd"
       - "/dev/dri:/dev/dri"
       - "/sys:/sys:ro"
+      - "/usr/lib64/rocm:/usr/lib64/rocm:ro"
+      - "/usr/lib64/librocm_smi64.so.1:/usr/lib64/librocm_smi64.so.1:ro"
+      - "/usr/bin/rocm-smi:/usr/bin/rocm-smi:ro"
     privileged: true
     networks:
       - stack
