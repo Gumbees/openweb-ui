@@ -97,7 +97,7 @@ services:
         window: 120s
       labels:
         - "traefik.enable=true"
-        - "traefik.docker.network=${TRAEFIK_PUBLIC_NETWORK:-traefik_public}"
+        - "traefik.swarm.network=${TRAEFIK_PUBLIC_NETWORK:-traefik_public}"
         - "traefik.http.routers.openwebui-public-http.rule=Host(`${OPEN_WEBUI_PUBLIC_DOMAIN}`)"
         - "traefik.http.routers.openwebui-public-http.entrypoints=web"
         - "traefik.http.routers.openwebui-public-http.service=openwebui"
