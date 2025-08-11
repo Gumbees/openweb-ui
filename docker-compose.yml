@@ -123,9 +123,11 @@ services:
       - TZ=${TZ}
       - AMD_VISIBLE_DEVICES=all
       - HSA_OVERRIDE_GFX_VERSION=10.3.0
-      - HCC_AMDGPU_TARGET=gfx1030
     volumes:
       - "ollama_data_volume:/root/.ollama"
+      - "/dev/kfd:/dev/kfd"
+      - "/dev/dri:/dev/dri"
+    privileged: true
     networks:
       - stack
     healthcheck:
@@ -146,12 +148,7 @@ services:
           - node.platform.os == linux
           - node.platform.arch == x86_64
           - node.labels.amd_gpu == true
-      resources:
-        reservations:
-          devices:
-            - driver: 'amd'
-              count: all
-              capabilities: [gpu]
+
       labels:
         - "amd_gpu=true"
 
