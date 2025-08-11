@@ -118,7 +118,7 @@ services:
 
   # Ollama for local models (AMD ROCm)
   ollama:
-    image: "ollama/ollama:${OLLAMA_IMAGE_TAG:-rocm}"
+    image: "ollama/ollama:${OLLAMA_IMAGE_TAG:-latest}"
     environment:
       - TZ=${TZ}
       - AMD_VISIBLE_DEVICES=0
