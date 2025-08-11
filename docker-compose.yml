@@ -121,6 +121,8 @@ services:
     image: "ollama/ollama:${OLLAMA_IMAGE_TAG:-latest}"
     environment:
       - TZ=${TZ}
+      - HSA_OVERRIDE_GFX_VERSION_0=11.0.0
+      - HSA_OVERRIDE_GFX_VERSION_1=11.0.0
     volumes:
       - "ollama_data_volume:/root/.ollama"
       - "/dev/kfd:/dev/kfd"
