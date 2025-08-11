@@ -122,12 +122,12 @@ services:
     environment:
       - TZ=${TZ}
       - AMD_VISIBLE_DEVICES=all
-      - HSA_OVERRIDE_GFX_VERSION=10.3.0
     volumes:
       - "ollama_data_volume:/root/.ollama"
     devices:
       - "/dev/kfd:/dev/kfd"
       - "/dev/dri:/dev/dri"
+    privileged: true
     networks:
       - stack
     healthcheck:
