@@ -5,7 +5,7 @@ This Docker Compose configuration provides a complete Open-WebUI stack with Olla
 ## Features
 
 - **Open-WebUI**: Self-hosted web interface for AI chat
-- **Ollama**: Local AI model hosting (optional but recommended)
+- **Ollama (AMD ROCm)**: Local AI model hosting with AMD GPU support
 - **PostgreSQL**: Database for persistent data (optional - uses SQLite by default)
 - **Redis**: Caching layer (optional but recommended)
 - **Cloudflare Tunnel**: Secure remote access (optional)
@@ -76,29 +76,25 @@ For NVIDIA GPU support with Ollama:
 2. Set `OLLAMA_GPU_COUNT=1` (or number of GPUs)
 3. Update `OLLAMA_DEVICE_GPU=/dev/nvidia0:/dev/nvidia0`
 
-### NPU Support (Rockchip RK3588/RK3576)
+### Ollama (AMD GPU via ROCm)
 
-For **Rockchip RK3588/RK3576** boards (Orange Pi 5, etc.), you can use **RKLlama** instead of Ollama for NPU acceleration:
-
-1. **Enable RKLlama** and disable Ollama:
+1. Enable Ollama:
    ```bash
-   ENABLE_RKLLAMA=1
-   ENABLE_OLLAMA=0
+   ENABLE_OLLAMA=1
    ```
 
-2. **Configure NPU device access** (uses DRI devices):
-   ```bash
-   RKLLAMA_DEVICE_DRI=/dev/dri:/dev/dri
-   ```
+2. AMD GPU device access (ROCm):
+   - The compose mounts `/dev/kfd` and `/dev/dri` for AMD GPUs.
+   - Ensure the host has ROCm drivers available.
 
-3. **Verify NPU devices exist**:
-   ```bash
-   ls -la /dev/dri/
-   # Should show: card0, card1, render128, render129
-   ```
+3. Healthcheck: `http://localhost:11434/api/tags`
 
-4. **Compatible with Armbian** on Orange Pi 5 Plus and other RK3588 boards
-5. **Models**: Use `.rkllm` format models instead of standard Ollama models
+4. Swarm placement constraints:
+   - Label your AMD GPU nodes and deploy only there:
+     ```bash
+     docker node update --label-add amd_gpu=true <node-name>
+     ```
+   - This stack requires `node.platform.arch==amd64` and `node.platform.os==linux`.
 
 ### Database Options
 

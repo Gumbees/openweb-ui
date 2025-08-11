@@ -116,28 +116,37 @@ services:
         - "traefik.http.routers.openwebui-private-https.tls.certresolver=${OPEN_WEBUI_CERT_RESOLVER:-letsencrypt}"
         - "traefik.http.services.openwebui.loadbalancer.server.port=8080"
 
-  # Alternative: RKLlama for Rockchip NPU acceleration
-  rkllama:
-    image: "ghcr.io/notpunchnox/rkllama:main"
+  # Ollama for local models (AMD ROCm)
+  ollama:
+    image: "ollama/ollama:${OLLAMA_IMAGE_TAG:-rocm}"
     environment:
       - TZ=${TZ}
     volumes:
-      - "rkllama_data_volume:/app/models"
+      - "ollama_data_volume:/root/.ollama"
+      - "/dev/kfd:/dev/kfd"
+      - "/dev/dri:/dev/dri"
     networks:
       - stack
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      test: ["CMD", "curl", "-sf", "http://localhost:11434/api/tags"]
       interval: 60s
       timeout: 10s
       retries: 3
       start_period: 60s
     deploy:
-      replicas: ${ENABLE_RKLLAMA:-0}
+      replicas: ${ENABLE_OLLAMA:-0}
       restart_policy:
         condition: any
         delay: 5s
         max_attempts: 3
         window: 120s
+      placement:
+        constraints:
+          - node.platform.os == linux
+          - node.platform.arch == x86_64
+          - node.labels.amd_gpu == true
+      labels:
+        - "amd_gpu=true"
 
   redis:
     image: "redis:7-alpine"
@@ -207,12 +216,6 @@ services:
         delay: 5s
         max_attempts: 3
         window: 120s
-    healthcheck:
-      test: ["CMD", "cloudflared", "tunnel", "status"]
-      interval: 120s
-      timeout: 30s
-      retries: 5
-      start_period: 60s
 
 networks:
   # Single overlay network for this stack
@@ -254,11 +257,11 @@ volumes:
       o: ${POSTGRES_DATA_VOLUME_OPTIONS:-}
       device: ${POSTGRES_DATA_BASE:-}
   
-  # RKLlama models volume (for Rockchip NPU)
-  rkllama_data_volume:
-    name: "${CONTAINER_NAME_PREFIX}_rkllama_data"
+  # Ollama models volume
+  ollama_data_volume:
+    name: "${CONTAINER_NAME_PREFIX}_ollama_data"
     driver: local
     driver_opts:
-      type: ${RKLLAMA_DATA_VOLUME_TYPE:-}
-      o: ${RKLLAMA_DATA_VOLUME_OPTIONS:-}
-      device: ${RKLLAMA_DATA_BASE:-} 
+      type: ${OLLAMA_DATA_VOLUME_TYPE:-}
+      o: ${OLLAMA_DATA_VOLUME_OPTIONS:-}
+      device: ${OLLAMA_DATA_BASE:-}
