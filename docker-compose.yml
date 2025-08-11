@@ -124,9 +124,9 @@ services:
       - AMD_VISIBLE_DEVICES=all
     volumes:
       - "ollama_data_volume:/root/.ollama"
-    devices:
       - "/dev/kfd:/dev/kfd"
       - "/dev/dri:/dev/dri"
+      - "/sys:/sys:ro"
     privileged: true
     networks:
       - stack
