@@ -121,6 +121,7 @@ services:
     image: "ollama/ollama:${OLLAMA_IMAGE_TAG:-latest}"
     environment:
       - TZ=${TZ}
+      - ROCR_VISIBLE_DEVICES=1
       - HSA_OVERRIDE_GFX_VERSION_0=11.0.0
       - HSA_OVERRIDE_GFX_VERSION_1=11.0.0
     volumes:
@@ -142,12 +143,6 @@ services:
         delay: 5s
         max_attempts: 3
         window: 120s
-      placement:
-        constraints:
-          - node.platform.os == linux
-          - node.platform.arch == x86_64
-          - node.labels.amd_gpu == true
-
       labels:
         - "amd_gpu=true"
 
