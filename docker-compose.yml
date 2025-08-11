@@ -121,10 +121,13 @@ services:
     image: "ollama/ollama:${OLLAMA_IMAGE_TAG:-rocm}"
     environment:
       - TZ=${TZ}
+      - HSA_OVERRIDE_GFX_VERSION=10.3.0
+      - HCC_AMDGPU_TARGET=gfx1030
     volumes:
       - "ollama_data_volume:/root/.ollama"
       - "/dev/kfd:/dev/kfd"
       - "/dev/dri:/dev/dri"
+    privileged: true
     networks:
       - stack
     healthcheck:
