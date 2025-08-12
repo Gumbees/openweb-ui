@@ -189,7 +189,7 @@ services:
 
   agent-zero:
     image: "agent0ai/agent-zero:latest"
-    user: "${PUID}:${PGID}"
+    #user: "${PUID}:${PGID}"
     environment:
       - TZ=${TZ}
     volumes:
