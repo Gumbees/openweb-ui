@@ -116,35 +116,7 @@ services:
         - "traefik.http.routers.openwebui-private-https.tls.certresolver=${OPEN_WEBUI_CERT_RESOLVER:-letsencrypt}"
         - "traefik.http.services.openwebui.loadbalancer.server.port=8080"
 
-  # Ollama for local models (AMD ROCm)
-  ollama:
-    image: "ollama/ollama:${OLLAMA_IMAGE_TAG:-latest}"
-    environment:
-      - TZ=${TZ}
-      - ROCR_VISIBLE_DEVICES=1
-      - HSA_OVERRIDE_GFX_VERSION_0=11.0.0
-      - HSA_OVERRIDE_GFX_VERSION_1=11.0.0
-    volumes:
-      - "ollama_data_volume:/root/.ollama"
-      - "/dev/kfd:/dev/kfd"
-      - "/dev/dri:/dev/dri"
-    networks:
-      - stack
-    healthcheck:
-      test: ["CMD", "curl", "-sf", "http://localhost:11434/api/tags"]
-      interval: 60s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
-    deploy:
-      replicas: ${ENABLE_OLLAMA:-0}
-      restart_policy:
-        condition: any
-        delay: 5s
-        max_attempts: 3
-        window: 120s
-      labels:
-        - "amd_gpu=true"
+
 
   redis:
     image: "redis:7-alpine"
@@ -215,12 +187,59 @@ services:
         max_attempts: 3
         window: 120s
 
+  agent-zero:
+    image: "agent-zero-run:latest"
+    user: "${PUID}:${PGID}"
+    environment:
+      - TZ=${TZ}
+    volumes:
+      - "agent_zero_data_volume:/app/data"
+      - "/etc/localtime:/etc/localtime:ro"
+    networks:
+      - stack
+      - traefik_public
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      replicas: ${ENABLE_AGENT_ZERO:-0}
+      resources:
+        limits:
+          memory: ${AGENT_ZERO_MEMORY_LIMIT:-32G}
+      restart_policy:
+        condition: any
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+      labels:
+        - "traefik.enable=true"
+        - "traefik.swarm.network=${TRAEFIK_PUBLIC_NETWORK:-traefik_public}"
+        - "traefik.http.routers.agentzero-public-http.rule=Host(`${AGENT_ZERO_PUBLIC_DOMAIN}`)"
+        - "traefik.http.routers.agentzero-public-http.entrypoints=web"
+        - "traefik.http.routers.agentzero-public-http.service=agentzero"
+        - "traefik.http.routers.agentzero-public-https.rule=Host(`${AGENT_ZERO_PUBLIC_DOMAIN}`)"
+        - "traefik.http.routers.agentzero-public-https.entrypoints=websecure"
+        - "traefik.http.routers.agentzero-public-https.service=agentzero"
+        - "traefik.http.routers.agentzero-public-https.tls=true"
+        - "traefik.http.routers.agentzero-public-https.tls.certresolver=${AGENT_ZERO_CERT_RESOLVER:-letsencrypt}"
+        - "traefik.http.routers.agentzero-private-http.rule=Host(`${AGENT_ZERO_PRIVATE_DOMAIN}`)"
+        - "traefik.http.routers.agentzero-private-http.entrypoints=web"
+        - "traefik.http.routers.agentzero-private-http.service=agentzero"
+        - "traefik.http.routers.agentzero-private-https.rule=Host(`${AGENT_ZERO_PRIVATE_DOMAIN}`)"
+        - "traefik.http.routers.agentzero-private-https.entrypoints=websecure"
+        - "traefik.http.routers.agentzero-private-https.service=agentzero"
+        - "traefik.http.routers.agentzero-private-https.tls=true"
+        - "traefik.http.routers.agentzero-private-https.tls.certresolver=${AGENT_ZERO_CERT_RESOLVER:-letsencrypt}"
+        - "traefik.http.services.agentzero.loadbalancer.server.port=80"
+
 networks:
-  # Single overlay network for this stack
+  # External overlay network for this stack (must be created externally)
   stack:
+    external: true
     name: "${STACK_NETWORK_NAME:-openwebui_stack}"
-    driver: overlay
-    attachable: true
 
   # External proxy network used by Traefik
   traefik_public:
@@ -255,11 +274,12 @@ volumes:
       o: ${POSTGRES_DATA_VOLUME_OPTIONS:-}
       device: ${POSTGRES_DATA_BASE:-}
   
-  # Ollama models volume
-  ollama_data_volume:
-    name: "${CONTAINER_NAME_PREFIX}_ollama_data"
+  # Agent Zero data volume
+  agent_zero_data_volume:
+    name: "${CONTAINER_NAME_PREFIX}_agent_zero_data"
     driver: local
     driver_opts:
-      type: ${OLLAMA_DATA_VOLUME_TYPE:-}
-      o: ${OLLAMA_DATA_VOLUME_OPTIONS:-}
-      device: ${OLLAMA_DATA_BASE:-}
+      type: ${AGENT_ZERO_DATA_VOLUME_TYPE:-}
+      o: ${AGENT_ZERO_DATA_VOLUME_OPTIONS:-}
+      device: ${AGENT_ZERO_DATA_BASE:-}
+  
