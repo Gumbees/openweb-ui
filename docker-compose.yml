@@ -188,7 +188,7 @@ services:
         window: 120s
 
   agent-zero:
-    image: "agent0ai:latest"
+    image: "agent0ai/agent-zero:latest"
     user: "${PUID}:${PGID}"
     environment:
       - TZ=${TZ}
