@@ -193,6 +193,7 @@ services:
       - TZ=${TZ}
     volumes:
       - "agent_zero_data_volume:/root"
+      - "agent_zero_work_volume:/a0"
       - "/etc/localtime:/etc/localtime:ro"
     networks:
       - stack
@@ -281,4 +282,13 @@ volumes:
       type: ${AGENT_ZERO_DATA_VOLUME_TYPE:-}
       o: ${AGENT_ZERO_DATA_VOLUME_OPTIONS:-}
       device: ${AGENT_ZERO_DATA_BASE:-}
+  
+  # Agent Zero work volume
+  agent_zero_work_volume:
+    name: "${CONTAINER_NAME_PREFIX}_agent_zero_work"
+    driver: local
+    driver_opts:
+      type: ${AGENT_ZERO_WORK_VOLUME_TYPE:-}
+      o: ${AGENT_ZERO_WORK_VOLUME_OPTIONS:-}
+      device: ${AGENT_ZERO_WORK_BASE:-}
   
