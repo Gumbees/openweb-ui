@@ -193,7 +193,7 @@ services:
     environment:
       - TZ=${TZ}
     volumes:
-      - "agent_zero_data_volume:/app/data"
+      - "agent_zero_data_volume:/root"
       - "/etc/localtime:/etc/localtime:ro"
     networks:
       - stack
