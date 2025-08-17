@@ -239,6 +239,7 @@ networks:
   # Internal overlay network for this stack
   stack:
     name: "${STACK_NETWORK_NAME:-openwebui_stack}"
+    attachable: true
 
   # External proxy network used by Traefik
   traefik_public:
