@@ -236,9 +236,8 @@ services:
         - "traefik.http.services.agentzero.loadbalancer.server.port=80"
 
 networks:
-  # External overlay network for this stack (must be created externally)
+  # Internal overlay network for this stack
   stack:
-    external: true
     name: "${STACK_NETWORK_NAME:-openwebui_stack}"
 
   # External proxy network used by Traefik
