@@ -46,7 +46,7 @@ services:
       open_webui_db:
       open_webui_models:
     depends_on: []
-    restart: unless-stopped
+    restart: on-failure:3
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 30s
@@ -92,7 +92,7 @@ services:
     networks:
       open_webui_app:
       open_webui_models:
-    restart: unless-stopped
+    restart: on-failure:3
     healthcheck:
       test: ["CMD", "ollama", "list"]
       interval: 60s
@@ -119,7 +119,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-    restart: unless-stopped
+    restart: on-failure:3
     deploy:
       replicas: ${ENABLE_REDIS:-1}
 
@@ -142,7 +142,7 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
-    restart: unless-stopped
+    restart: on-failure:3
     deploy:
       replicas: ${ENABLE_POSTGRES:-1}
     logging:
@@ -161,7 +161,7 @@ services:
       - TUNNEL_TOKEN=${OPEN_WEBUI_CLOUDFLARE_TUNNEL_TOKEN}
     networks:
       open_webui_app:
-    restart: unless-stopped
+    restart: on-failure:3
     deploy:
       replicas: ${ENABLE_OPEN_WEBUI_CLOUDFLARED:-0}
     healthcheck:
