@@ -1,17 +1,16 @@
 # Open-WebUI Docker Compose Setup
 
-This Docker Compose configuration provides a complete Open-WebUI stack with Ollama for local AI model hosting, following the same architecture patterns as enterprise-grade applications.
+This Docker Compose configuration provides a complete Open-WebUI stack for local AI model hosting, following the same architecture patterns as enterprise-grade applications.
 
 ## Features
 
 - **Open-WebUI**: Self-hosted web interface for AI chat
-- **Ollama (AMD ROCm)**: Local AI model hosting with AMD GPU support
 - **PostgreSQL**: Database for persistent data (optional - uses SQLite by default)
 - **Redis**: Caching layer (optional but recommended)
 - **Cloudflare Tunnel**: Secure remote access (optional)
 - **Network Isolation**: Secure internal networks
-- **CPU Inference**: Ollama runs on CPU (no GPU required)
-- **ARM64 Compatible**: Works on Apple Silicon and ARM64 systems
+- **Standalone Architecture**: Ollama runs as a separate service for better resource management
+- **GPU Optimization**: Both AMD ROCm and NVIDIA CUDA support
 
 ## Quick Start
 
@@ -90,42 +89,9 @@ Configure OAuth/OpenID Connect for single sign-on:
 
 You can configure multiple AI providers:
 
-#### Local Models (Ollama CPU)
-- Set `ENABLE_OLLAMA=1`
-- Ollama will be available at `http://ollama:11434` internally
-- Pull models: `docker compose exec ollama ollama pull llama2`
-- **Note**: CPU version - models will run on CPU (slower but no GPU required)
-
 #### External APIs
 - **OpenAI**: Set `OPENAI_API_KEY`
 - **Anthropic**: Set `ANTHROPIC_API_KEY`
-
-### Resource Configuration
-
-For CPU-only Ollama deployment:
-1. Set `ENABLE_OLLAMA=1`
-2. Adjust `OLLAMA_MEMORY_LIMIT=4G` (or higher for larger models)
-3. **Note**: CPU inference is slower but requires no special hardware
-
-### Ollama (AMD GPU via ROCm)
-
-1. Enable Ollama:
-   ```bash
-   ENABLE_OLLAMA=1
-   ```
-
-2. AMD GPU device access (ROCm):
-   - The compose mounts `/dev/kfd` and `/dev/dri` for AMD GPUs.
-   - Ensure the host has ROCm drivers available.
-
-3. Healthcheck: `http://localhost:11434/api/tags`
-
-4. Swarm placement constraints:
-   - Label your AMD GPU nodes and deploy only there:
-     ```bash
-     docker node update --label-add amd_gpu=true <node-name>
-     ```
-   - This stack requires `node.platform.arch==amd64` and `node.platform.os==linux`.
 
 ### Database Options
 
@@ -170,24 +136,9 @@ docker service logs -f openwebui_open-webui | cat
 docker stack deploy -c docker-compose.yml openwebui
 ```
 
-## Ollama Management
 
-### Pull models:
-```bash
-docker compose exec ollama ollama pull llama2
-docker compose exec ollama ollama pull codellama
-docker compose exec ollama ollama pull mistral
-```
 
-### List models:
-```bash
-docker compose exec ollama ollama list
-```
 
-### Remove models:
-```bash
-docker compose exec ollama ollama rm model_name
-```
 
 ## Security Considerations
 
