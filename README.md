@@ -10,7 +10,7 @@ This Docker Compose configuration provides a complete Open-WebUI stack with Olla
 - **Redis**: Caching layer (optional but recommended)
 - **Cloudflare Tunnel**: Secure remote access (optional)
 - **Network Isolation**: Secure internal networks
-- **GPU Support**: NVIDIA GPU support for Ollama
+- **CPU Inference**: Ollama runs on CPU (no GPU required)
 - **ARM64 Compatible**: Works on Apple Silicon and ARM64 systems
 
 ## Quick Start
@@ -56,25 +56,56 @@ The minimal configuration requires:
 - `CONTAINER_NAME_PREFIX`: Unique prefix for your containers
 - `TZ`: Your timezone
 
+### Authentication Options
+
+#### Local Authentication (Default)
+Standard username/password authentication with local user accounts.
+
+#### Entra ID SSO (Azure AD)
+Configure OAuth/OpenID Connect for single sign-on:
+
+1. **Register an App in Entra ID:**
+   - Go to Azure Portal → Entra ID → App registrations
+   - Create a new registration
+   - Set redirect URI to: `https://your-domain.com/oauth/callback`
+   - Note the Application (client) ID and create a client secret
+
+2. **Configure OAuth settings in `.env`:**
+   ```bash
+   OAUTH_CLIENT_ID=your-application-client-id
+   OAUTH_CLIENT_SECRET=your-client-secret
+   OPENID_PROVIDER_URL=https://login.microsoftonline.com/your-tenant-id/v2.0
+   OAUTH_SCOPES=openid email profile
+   OAUTH_PROVIDER_NAME=Entra ID
+   ```
+
+3. **Optional settings:**
+   ```bash
+   OAUTH_USERNAME_CLAIM=preferred_username  # or 'email'
+   OAUTH_EMAIL_CLAIM=email
+   OAUTH_MERGE_ACCOUNTS_BY_EMAIL=false
+   ```
+
 ### AI Model Providers
 
 You can configure multiple AI providers:
 
-#### Local Models (Ollama)
+#### Local Models (Ollama CPU)
 - Set `ENABLE_OLLAMA=1`
 - Ollama will be available at `http://ollama:11434` internally
 - Pull models: `docker compose exec ollama ollama pull llama2`
+- **Note**: CPU version - models will run on CPU (slower but no GPU required)
 
 #### External APIs
 - **OpenAI**: Set `OPENAI_API_KEY`
 - **Anthropic**: Set `ANTHROPIC_API_KEY`
 
-### GPU Support
+### Resource Configuration
 
-For NVIDIA GPU support with Ollama:
-1. Install NVIDIA Container Toolkit
-2. Set `OLLAMA_GPU_COUNT=1` (or number of GPUs)
-3. Update `OLLAMA_DEVICE_GPU=/dev/nvidia0:/dev/nvidia0`
+For CPU-only Ollama deployment:
+1. Set `ENABLE_OLLAMA=1`
+2. Adjust `OLLAMA_MEMORY_LIMIT=4G` (or higher for larger models)
+3. **Note**: CPU inference is slower but requires no special hardware
 
 ### Ollama (AMD GPU via ROCm)
 
@@ -162,18 +193,29 @@ docker compose exec ollama ollama rm model_name
 
 1. **Change default passwords** in the `.env` file
 2. **Generate a strong secret key** for `WEBUI_SECRET_KEY`
-3. **Disable signup** (`ENABLE_SIGNUP=false`) after creating admin accounts
+3. **Disable signup** (`ENABLE_SIGNUP=false`) after creating admin accounts or when using SSO
 4. **Use Cloudflare Tunnel** for secure remote access instead of port forwarding
 5. **Enable authentication** (`WEBUI_AUTH=true`)
+6. **SSO Security**:
+   - Keep OAuth client secrets secure and rotate them regularly
+   - Use HTTPS for all OAuth redirect URIs
+   - Configure appropriate scopes in Entra ID (minimum required permissions)
+   - Consider setting `OAUTH_MERGE_ACCOUNTS_BY_EMAIL=true` if users might have both local and SSO accounts
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. **Permission errors**: Check `PUID` and `PGID` values
+1. **Permission errors**: Check volume permissions and ensure container can write to data directories
 2. **Port conflicts**: Change `OPEN_WEBUI_PORT` in `.env`
-3. **GPU not detected**: Ensure NVIDIA Container Toolkit is installed
-4. **Network issues**: Verify external network exists: `docker network ls`
+3. **Memory issues**: Increase `OLLAMA_MEMORY_LIMIT` for larger models
+4. **Network issues**: Check Docker network connectivity
+5. **OAuth/SSO Issues**:
+   - Verify redirect URI matches exactly (including protocol and path)
+   - Check that client secret hasn't expired
+   - Ensure `OPENID_PROVIDER_URL` includes correct tenant ID
+   - Verify required API permissions are granted in Entra ID
+   - Check logs for specific OAuth error messages
 
 ### Health Checks
 
@@ -207,11 +249,7 @@ docker run --rm -v openwebui_open_webui_data:/data -v $(pwd):/backup alpine tar 
 
 ### Custom Volume Mounts
 
-Edit volume configuration in `.env`:
-```bash
-OPEN_WEBUI_DATA_BASE=/path/to/your/data
-OPEN_WEBUI_DATA_VOLUME_TYPE=bind
-```
+All volumes now use Docker's default local storage. Data is stored in Docker-managed volumes under `/var/lib/docker/volumes/` (on most systems). If you need custom mount points, you can modify the volume definitions directly in the `docker-compose.yml` file.
 
 ### Resource Limits
 
@@ -220,14 +258,7 @@ Adjust memory limits:
 OPEN_WEBUI_MEMORY_LIMIT=4G
 ```
 
-### Network Configuration
 
-For home network integration:
-```bash
-ENABLE_HOME_IOT_NETWORK=true
-HOME_IOT_NETWORK=your_network_name
-OPEN_WEBUI_IP=192.168.1.100
-```
 
 ## Support
 

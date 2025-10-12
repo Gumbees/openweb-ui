@@ -11,7 +11,6 @@ version: "3.8"
 services:
   open-webui:
     image: "ghcr.io/open-webui/open-webui:${OPEN_WEBUI_VERSION:-main}"
-    user: "${PUID}:${PGID}"
     environment:
       - TZ=${TZ}
       - WEBUI_SECRET_KEY=${WEBUI_SECRET_KEY}
@@ -251,28 +250,16 @@ volumes:
   open_webui_data_volume:
     name: "${CONTAINER_NAME_PREFIX}_open_webui_data"
     driver: local
-    driver_opts:
-      type: ${OPEN_WEBUI_DATA_VOLUME_TYPE:-}
-      o: ${OPEN_WEBUI_DATA_VOLUME_OPTIONS:-}
-      device: ${OPEN_WEBUI_DATA_BASE:-}
   
   # Redis data volume
   redis_data_volume:
     name: "${CONTAINER_NAME_PREFIX}_redis_data"
     driver: local
-    driver_opts:
-      type: ${REDIS_DATA_VOLUME_TYPE:-}
-      o: ${REDIS_DATA_VOLUME_OPTIONS:-}
-      device: ${REDIS_DATA_BASE:-}
   
   # PostgreSQL data volume
   postgres_data_volume:
     name: "${CONTAINER_NAME_PREFIX}_postgres_data"
     driver: local
-    driver_opts:
-      type: ${POSTGRES_DATA_VOLUME_TYPE:-}
-      o: ${POSTGRES_DATA_VOLUME_OPTIONS:-}
-      device: ${POSTGRES_DATA_BASE:-}
   
   # Agent Zero data volume
   agent_zero_data_volume:
