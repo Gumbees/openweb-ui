@@ -1,11 +1,10 @@
 # Open-WebUI Docker Compose Setup
 
-This Docker Compose configuration provides a complete Open-WebUI stack with optional standalone Ollama deployment for local AI model hosting, following the same architecture patterns as enterprise-grade applications.
+This Docker Compose configuration provides a complete Open-WebUI stack for local AI model hosting, following the same architecture patterns as enterprise-grade applications.
 
 ## Features
 
 - **Open-WebUI**: Self-hosted web interface for AI chat
-- **Standalone Ollama (AMD ROCm/NVIDIA CUDA)**: Separate GPU-accelerated AI model hosting
 - **PostgreSQL**: Database for persistent data (optional - uses SQLite by default)
 - **Redis**: Caching layer (optional but recommended)
 - **Cloudflare Tunnel**: Secure remote access (optional)
@@ -90,25 +89,9 @@ Configure OAuth/OpenID Connect for single sign-on:
 
 You can configure multiple AI providers:
 
-#### Standalone Ollama (GPU-Accelerated)
-- Use the separate `docker-compose-ollama.yml` file for GPU-accelerated Ollama
-- Supports both AMD ROCm and NVIDIA CUDA
-- Network integration with main Open-WebUI stack
-- Pull models: `docker compose -f docker-compose-ollama.yml exec ollama ollama pull llama2`
-
 #### External APIs
 - **OpenAI**: Set `OPENAI_API_KEY`
 - **Anthropic**: Set `ANTHROPIC_API_KEY`
-
-### Standalone Ollama Deployment
-
-For GPU-accelerated Ollama deployment:
-1. Use the separate `docker-compose-ollama.yml` file
-2. Configure GPU settings in `.env` file
-3. Create required external networks before deployment
-4. **Note**: GPU acceleration requires appropriate drivers (AMD ROCm or NVIDIA CUDA)
-
-See the Ollama standalone deployment section below for detailed instructions.
 
 ### Database Options
 
@@ -153,57 +136,9 @@ docker service logs -f openwebui_open-webui | cat
 docker stack deploy -c docker-compose.yml openwebui
 ```
 
-## Standalone Ollama Deployment
 
-### Prerequisites
 
-Create required networks before deployment:
 
-```bash
-# Create the Ollama internal network
-docker network create --driver overlay --attachable ollama_network
-
-# Create the shared Open-WebUI stack network
-docker network create --driver overlay --attachable openwebui_stack
-```
-
-### Deployment
-
-1. Deploy the standalone Ollama service:
-   ```bash
-   docker-compose -f docker-compose-ollama.yml up -d
-   ```
-
-2. Deploy the main Open-WebUI stack:
-   ```bash
-   docker-compose up -d
-   ```
-
-For detailed GPU configuration and troubleshooting, refer to the environment variables in `.env.example`.
-
-## Ollama Management
-
-### Pull models:
-```bash
-docker compose -f docker-compose-ollama.yml exec ollama ollama pull llama2
-docker compose -f docker-compose-ollama.yml exec ollama ollama pull codellama
-docker compose -f docker-compose-ollama.yml exec ollama ollama pull mistral
-```
-
-### List models:
-```bash
-docker compose -f docker-compose-ollama.yml exec ollama ollama list
-```
-
-### Remove models:
-```bash
-docker compose -f docker-compose-ollama.yml exec ollama ollama rm model_name
-```
-
-### Test Ollama API:
-```bash
-curl http://localhost:11434/api/tags
-```
 
 ## Security Considerations
 
