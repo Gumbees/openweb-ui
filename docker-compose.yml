@@ -2,6 +2,9 @@
 # Environment variables are loaded from .env file by default
 # See README.md for detailed documentation
 #
+# NOTE: For GPU-accelerated Ollama deployment, use the separate
+# docker-compose-ollama.yml file alongside this stack.
+#
 # ARM64 COMPATIBILITY NOTES:
 # - All services support ARM64 architecture
 # - Using latest tags for better ARM64 support where applicable

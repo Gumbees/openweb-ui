@@ -2,6 +2,11 @@
 # Standalone deployment for Ollama with GPU acceleration
 # Environment variables are loaded from .env file by default
 #
+# PREREQUISITES:
+# - AMD ROCm or NVIDIA drivers installed on host
+# - External networks: ollama_network and openwebui_stack
+# - See README.md for detailed setup instructions
+#
 # GPU ACCELERATION NOTES:
 # - Supports both NVIDIA and AMD GPU acceleration
 # - AMD GPU acceleration uses ROCm runtime
