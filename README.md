@@ -5,7 +5,7 @@ This Docker Compose configuration provides a complete Open-WebUI stack with Olla
 ## Features
 
 - **Open-WebUI**: Self-hosted web interface for AI chat
-- **Ollama**: Local AI model hosting (optional but recommended)
+- **Ollama (AMD ROCm)**: Local AI model hosting with AMD GPU support
 - **PostgreSQL**: Database for persistent data (optional - uses SQLite by default)
 - **Redis**: Caching layer (optional but recommended)
 - **Cloudflare Tunnel**: Secure remote access (optional)
@@ -28,9 +28,19 @@ This Docker Compose configuration provides a complete Open-WebUI stack with Olla
    # Add this to WEBUI_SECRET_KEY in your .env file
    ```
 
-3. **Start the services:**
+3. **Initialize Docker Swarm (required for this stack):**
    ```bash
-   docker compose up -d
+   docker swarm init
+   ```
+
+4. **Create the external Traefik network (overlay):**
+   ```bash
+   docker network create --driver=overlay --attachable traefik_public
+   ```
+
+5. **Deploy the stack to Swarm:**
+   ```bash
+   docker stack deploy -c docker-compose.yml openwebui
    ```
 
 5. **Access Open-WebUI:**
@@ -97,7 +107,25 @@ For CPU-only Ollama deployment:
 2. Adjust `OLLAMA_MEMORY_LIMIT=4G` (or higher for larger models)
 3. **Note**: CPU inference is slower but requires no special hardware
 
+### Ollama (AMD GPU via ROCm)
 
+1. Enable Ollama:
+   ```bash
+   ENABLE_OLLAMA=1
+   ```
+
+2. AMD GPU device access (ROCm):
+   - The compose mounts `/dev/kfd` and `/dev/dri` for AMD GPUs.
+   - Ensure the host has ROCm drivers available.
+
+3. Healthcheck: `http://localhost:11434/api/tags`
+
+4. Swarm placement constraints:
+   - Label your AMD GPU nodes and deploy only there:
+     ```bash
+     docker node update --label-add amd_gpu=true <node-name>
+     ```
+   - This stack requires `node.platform.arch==amd64` and `node.platform.os==linux`.
 
 ### Database Options
 
@@ -112,45 +140,34 @@ POSTGRES_PASSWORD=your_secure_password
 
 ### Networks
 
-The setup uses multiple isolated networks for security:
-- `open_webui_app`: App network with internet access (open-webui, ollama, cloudflared)
-- `open_webui_db`: Database network with no internet (open-webui, postgresql, redis)
-- `open_webui_models`: Model communication with no internet (open-webui, ollama)
+This stack is Swarm-ready and uses overlay networks:
+- `stack` (overlay, attachable): Internal stack network for all services
+- `traefik_public` (external overlay): For Traefik to route public/private domains
 
-**Network Architecture:**
-```
-Internet ←→ open_webui_app ←→ open-webui ←→ open_webui_db ←→ postgresql
-                ↓                   ↓                    ↓
-           cloudflared       open_webui_models ←→ ollama   redis
-```
-
-This architecture ensures:
-- Databases are completely isolated from the internet
-- App layer has internet access for external APIs and tunneling
-- Models can be accessed by the app but are isolated from databases
+Notes:
+- Services expecting proxy traffic (e.g., `open-webui`) are attached to both `stack` and `traefik_public`.
+- All other services are attached only to `stack`.
 
 ## Service Management
 
-### Start services:
+### Deploy/Update the stack:
 ```bash
-docker compose up -d
+docker stack deploy -c docker-compose.yml openwebui
 ```
 
 ### Stop services:
 ```bash
-docker compose down
+docker stack rm openwebui
 ```
 
 ### View logs:
 ```bash
-docker compose logs -f open-webui
-docker compose logs -f ollama
+docker service logs -f openwebui_open-webui | cat
 ```
 
 ### Update services:
 ```bash
-docker compose pull
-docker compose up -d
+docker stack deploy -c docker-compose.yml openwebui
 ```
 
 ## Ollama Management
@@ -204,7 +221,7 @@ docker compose exec ollama ollama rm model_name
 
 Check service health:
 ```bash
-docker compose ps
+docker stack ps openwebui
 ```
 
 All services include health checks for monitoring.
